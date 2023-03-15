@@ -2,6 +2,8 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const { connectToDatabase } = require("./src/database/mongo");
 const bodyParser = require("body-parser");
+const generateCode = require("./src/utils/codeGenerator");
+const sendEmail = require("./src/utils/mailSender");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,48 +14,44 @@ app.use(bodyParser.json());
 
 // Define login route that checks user credentials and generates a JWT token
 app.post("/login", async function (req, res) {
-  const { email, password } = req.body;
+  const { email } = req.body;
 
   // Find the user in the database by email
   const db = await connectToDatabase();
   const collection = db.collection("users");
   const user = await collection.find({ email });
-  console.log(user);
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  // Compare the input password with the hashed password in the database
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid credentials" });
+  const findCodeCriteria = {
+    email,
+    isValid: true,
+  };
+  const codesCollection = db.collection("codes");
+  const existing = await codesCollection.find(findCodeCriteria);
+  if (existing) {
+    await codesCollection.updateOne(findCodeCriteria, {
+      $set: { isValid: false },
+    });
   }
 
-  // Generate a JWT token for the authenticated user
-  const token = jwt.sign({ id: user._id }, jwtSecret, { expiresIn: "1h" });
-  res.json({ token });
-});
-
-// Define register route that creates a new user in the database
-app.post("/register", async function (req, res) {
-  const { email, password } = req.body;
-
-  // Hash the password before saving to the database
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create a new user in the database
-  const db = await connectToDatabase();
-  const collection = db.collection("users");
-  const result = await collection.insertOne({
+  const expiricy = 30 * 60 * 1000;
+  const createdAt = new Date();
+  const expiresAt = new Date(createdAt.getTime() + expiricy);
+  const code = generateCode();
+  const codeData = {
     email,
-    password: hashedPassword,
-  });
+    code,
+    created_at: createdAt.toUTCString(),
+    expires_at: expiresAt.toUTCString(),
+    isValid: true,
+  };
 
-  // Generate a JWT token for the newly registered user
-  const token = jwt.sign({ id: result.insertedId }, jwtSecret, {
-    expiresIn: "1h",
-  });
-  res.json({ token });
+  await codesCollection.insertOne(codeData);
+
+  sendEmail(email, "Your TibiaWidgets Login Code", code);
+  res.json({ message: "Checa tu email" });
 });
 
 // Define a middleware function that checks for a valid JWT token
