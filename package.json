@@ -1,0 +1,19 @@
+{
+  "name": "tibiawidgets-api",
+  "version": "1.0.0",
+  "description": "API for Tibia widgets electron app ",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Guillermo Beltran",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongodb": "^5.1.0"
+  }
+}
