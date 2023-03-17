@@ -18,12 +18,12 @@ async function login(req, res) {
 
   // Find the user in the database by email
   const db = await connectToDatabase();
-  const collection = db.collection("users");
-  let user = await collection.findOne({ email });
+  const userCollection = db.collection("users");
+  let user = await userCollection.findOne({ email });
   if (!user) {
-    user = await collection.insertOne({ email });
+    const newUser = { email, characters: [] };
+    user = await userCollection.insertOne(newUser);
   }
-
   const findCodeCriteria = {
     email,
     isValid: true,
@@ -94,14 +94,12 @@ async function verifyCode(req, res) {
   });
 }
 
-async function getUserById(req, res) {}
 async function updateUserById(req, res) {}
 async function deleteUserById(req, res) {}
 
 module.exports = {
   login,
   verifyCode,
-  getUserById,
   updateUserById,
   deleteUserById,
 };

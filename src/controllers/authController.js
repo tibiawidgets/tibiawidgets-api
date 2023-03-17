@@ -1,3 +1,5 @@
+const { jwtSecret } = require("../config/appConfig");
+const jwt = require("jsonwebtoken");
 // Define a middleware function that checks for a valid JWT token
 function requireAuth(req, res, next) {
   // Get the token from the Authorization header
