@@ -9,11 +9,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 const jwtSecret = "my-jwt-secret-key";
 const bcrypt = require("bcrypt");
+const { ObjectId } = require("mongodb");
 
 app.use(bodyParser.json());
 
 function generateToken(user) {
   const payload = {
+    id: user.id,
     email: user.email,
   };
   const options = { expiresIn: "1h" };
@@ -33,9 +35,9 @@ app.post("/login", async function (req, res) {
   // Find the user in the database by email
   const db = await connectToDatabase();
   const collection = db.collection("users");
-  const user = await collection.find({ email });
+  let user = await collection.findOne({ email });
   if (!user) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    user = await collection.insertOne({ email });
   }
 
   const findCodeCriteria = {
@@ -87,15 +89,17 @@ app.post("/verify-code", async function (req, res) {
     isValid: true,
   };
   const db = await connectToDatabase();
+  const usersCollection = db.collection("users");
   const codesCollection = db.collection("codes");
   const existing = await codesCollection.find(findCodeCriteria).toArray();
-
-  if (existing.length === 0) {
+  const user = await usersCollection.findOne({ email });
+  if (existing.length === 0 || !user) {
     return res.status(401).json({ message: "Invalid code or email" });
   }
 
   // generate token
-  const token = generateToken({ email });
+  const userId = user._id;
+  const token = generateToken({ id: userId, email });
 
   await codesCollection.updateOne(findCodeCriteria, {
     $set: { isValid: false },
@@ -104,6 +108,47 @@ app.post("/verify-code", async function (req, res) {
   res.status(200).json({
     token,
   });
+});
+
+app.post("/users/addHunt", requireAuth, async function (req, res) {
+  const authUser = req.user;
+  const { huntSession } = req.body;
+
+  try {
+    const db = await connectToDatabase();
+    const usersCollection = db.collection("users");
+    const user = await usersCollection.findOne({ email: authUser.email });
+
+    if (!user.huntSessions) {
+      await usersCollection.updateOne(
+        { email: authUser.email },
+        { $set: { huntSessions: [] } }
+      );
+    }
+
+    const filter = { email: authUser.email };
+    const update = { $push: { huntSessions: huntSession } };
+    const result = await usersCollection.updateOne(filter, update);
+
+    if (result.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ message: `No se pudo agregar la hunt session` });
+    }
+
+    res.status(200).json({
+      message: "Hunt session agregada",
+    });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ message: "Ocurrio un error al agregar la hunt session" });
+  }
+});
+
+app.delete("/users/deleteHunt", requireAuth, async function (req, res) {
+  const userId = req.params.id;
 });
 
 // Define a middleware function that checks for a valid JWT token
