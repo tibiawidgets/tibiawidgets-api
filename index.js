@@ -12,6 +12,20 @@ const bcrypt = require("bcrypt");
 
 app.use(bodyParser.json());
 
+function generateToken(user) {
+  const payload = {
+    email: user.email,
+  };
+  const options = { expiresIn: "1h" };
+  return jwt.sign(payload, jwtSecret, options);
+}
+
+// Función que cifra la contraseña del usuario
+function hashPassword(password) {
+  const saltRounds = 10; // El número de rondas de cifrado
+  return bcrypt.hash(password, saltRounds);
+}
+
 // Define login route that checks user credentials and generates a JWT token
 app.post("/login", async function (req, res) {
   const { email } = req.body;
@@ -51,7 +65,45 @@ app.post("/login", async function (req, res) {
   await codesCollection.insertOne(codeData);
 
   sendEmail(email, "Your TibiaWidgets Login Code", code);
-  res.json({ message: "Checa tu email" });
+  res.json({
+    message:
+      "An email with a code has been sent to you. Use this code to validate your identity. It will expire in 30 minutes.",
+  });
+});
+
+app.post("/verify-code", async function (req, res) {
+  const { code, email } = req.body;
+
+  if (!code) {
+    return res.status(401).json({ message: "Missing code" });
+  }
+  if (!email) {
+    return res.status(401).json({ message: "Missing email" });
+  }
+
+  const findCodeCriteria = {
+    email,
+    code,
+    isValid: true,
+  };
+  const db = await connectToDatabase();
+  const codesCollection = db.collection("codes");
+  const existing = await codesCollection.find(findCodeCriteria).toArray();
+
+  if (existing.length === 0) {
+    return res.status(401).json({ message: "Invalid code or email" });
+  }
+
+  // generate token
+  const token = generateToken({ email });
+
+  await codesCollection.updateOne(findCodeCriteria, {
+    $set: { isValid: false },
+  });
+
+  res.status(200).json({
+    token,
+  });
 });
 
 // Define a middleware function that checks for a valid JWT token
