@@ -51,6 +51,7 @@ async function login(req, res) {
   await codesCollection.insertOne(codeData);
 
   sendEmail(email, "Your TibiaWidgets Login Code", code);
+  console.log(code);
   res.json({
     message:
       "An email with a code has been sent to you. Use this code to validate your identity. It will expire in 30 minutes.",

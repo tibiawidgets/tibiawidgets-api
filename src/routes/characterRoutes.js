@@ -5,12 +5,17 @@ const { requireAuth } = require("../controllers/authController");
 
 router.post("/user/characters", requireAuth, charController.addUserCharacter);
 router.get("/user/characters", requireAuth, charController.getUserCharacters);
+router.delete(
+  "/user/characters",
+  requireAuth,
+  charController.deleteAllUserCharacters
+);
 router.get(
   "/user/characters/:characterId",
   requireAuth,
   charController.getUserCharacterById
 );
-router.put(
+router.patch(
   "/user/characters/:characterId",
   requireAuth,
   charController.updateUserCharacter
