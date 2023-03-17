@@ -122,7 +122,7 @@ app.get("/user/hunts", requireAuth, async function (req, res) {
   });
 });
 
-app.post("/user/addHunts", requireAuth, async function (req, res) {
+app.post("/user/hunts/add", requireAuth, async function (req, res) {
   const authUser = req.user;
   const { huntSessions } = req.body;
   if (!huntSessions || huntSessions.length === 0) {
@@ -166,7 +166,7 @@ app.post("/user/addHunts", requireAuth, async function (req, res) {
   }
 });
 
-app.delete("/user/deleteHunt/:huntId", requireAuth, async function (req, res) {
+app.delete("/user/hunt/:huntId/delete", requireAuth, async function (req, res) {
   const huntId = req.params.huntId;
   const authUser = req.user;
   const db = await connectToDatabase();
