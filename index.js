@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const { port } = require("./src/config/appConfig");
 const { requireAuth } = require("./src/controllers/authController");
 const userRoutes = require("./src/routes/userRoutes");
+const miscellaneousRoutes = require("./src/routes/miscellaneousRoutes");
 const characterRoutes = require("./src/routes/characterRoutes");
 const huntsRoutes = require("./src/routes/huntSessionRoutes");
 const clientOptionsRoutes = require("./src/routes/clientOptionsRoutes");
@@ -16,6 +17,9 @@ app.use(bodyParser.json({ limit: "1mb" }));
 
 // User endpoints
 app.use(userRoutes);
+
+// Miscellaneous endpints
+app.use(miscellaneousRoutes);
 
 // Endpoints for characters
 app.use(characterRoutes);
