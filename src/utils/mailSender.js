@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 async function sendEmail(sendto, subject, message) {
   // Configuración del servicio de correo electrónico
@@ -8,7 +9,7 @@ async function sendEmail(sendto, subject, message) {
     port: 465,
     auth: {
       user: "no-reply@tibiawidgets.com",
-      pass: "MmR3ykg8o8i7NscjBr6z",
+      pass: process.env.MAIL_SENDER_PASSWORD,
     },
   });
 

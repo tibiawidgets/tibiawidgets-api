@@ -15,6 +15,7 @@ function generateToken(user) {
 
 async function login(req, res) {
   const { email } = req.body;
+  debugger;
 
   // Find the user in the database by email
   const db = await connectToDatabase();
@@ -95,6 +96,19 @@ async function verifyCode(req, res) {
   });
 }
 
+async function getUserByEmail(req, res) {
+  const { email } = req.user;
+  const db = await connectToDatabase();
+  const userCollection = db.collection("users");
+  const filterByEmail = { email };
+  let user = await userCollection.findOne(filterByEmail);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  return res.status(200).json({ user });
+}
+
 async function updateUserById(req, res) {}
 async function deleteUserById(req, res) {}
 
@@ -103,4 +117,5 @@ module.exports = {
   verifyCode,
   updateUserById,
   deleteUserById,
+  getUserByEmail,
 };
