@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const mongoUrl =
-  "mongodb+srv://gbego91:mhjStMjwRyB1owMy@tibia-widgets.ri0t2zs.mongodb.net/tibia-widgets?retryWrites=true&w=majority";
+require("dotenv").config();
+const mongoUrl = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@tibia-widgets.ri0t2zs.mongodb.net/tibia-widgets?retryWrites=true&w=majority`;
 
 async function connectToDatabase() {
   const client = await mongoose

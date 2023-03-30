@@ -25,13 +25,12 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-UserSchema.methods.encryptPassword = async (password) => {
+UserSchema.methods.encryptPassword = async function (password) {
   const salt = await bcrypt.genSalt(10);
   return await bcrypt.hash(password, salt);
 };
 
-UserSchema.methods.matchPassword = async (password) => {
-  debugger;
+UserSchema.methods.matchPassword = async function (password) {
   if (!this.password) {
     return false;
   }
