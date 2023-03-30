@@ -15,16 +15,18 @@ passport.use(
       await connectToDatabase();
       const user = await User.findOne({ email: username });
       if (!user) {
-        done(true, false, { message: "Incorrect email" });
+        const error = new Error("Email doesn't exist");
+        error.status = 404;
+        return done(error, null, null, error.status);
       }
 
       const match = await user.matchPassword(password);
       if (match) {
-        done(null, user);
+        return done(null, user);
       } else {
-        done(true, false, {
-          message: "Incorrect password",
-        });
+        const error = new Error("Incorrect password");
+        error.status = 401;
+        return done(error, null, null, error.status);
       }
     }
   )

@@ -6,9 +6,7 @@ const passport = require("passport");
 router.put("/user", userController.updateUserById);
 router.get("/user", userController.getUserByEmail);
 
-router.post("/login", passport.authenticate("login"), (req, res) => {
-  res.json({ user: req.user });
-});
+router.post("/login", userController.login);
 router.post("/signin", userController.signin);
 router.get("/logout", userController.logout);
 router.get("/test", userController.test);

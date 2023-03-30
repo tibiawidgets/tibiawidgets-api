@@ -18,12 +18,10 @@ function generateToken(user) {
 async function login(req, res, next) {
   passport.authenticate("login", function callback(err, user, info, status) {
     if (err) {
-      return next(err);
+      const { message, status } = err;
+      return res.status(status).json({ message });
     }
-    if (!user) {
-      return res.redirect("/signin");
-    }
-    res.redirect("/account");
+    return res.json({ user });
   })(req, res, next);
 }
 
