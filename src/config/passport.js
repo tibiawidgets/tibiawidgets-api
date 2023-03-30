@@ -1,6 +1,7 @@
 const passport = require("passport");
 const localStrategy = require("passport-local").Strategy;
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
 const { connectToDatabase } = require("../database/mongo");
 
 passport.use(
@@ -9,9 +10,8 @@ passport.use(
     {
       usernameField: "email",
       passwordField: "password",
-      passReqToCallback: true,
     },
-    async function (req, username, password, done) {
+    async function (username, password, done) {
       await connectToDatabase();
       const user = await User.findOne({ email: username });
       if (!user) {

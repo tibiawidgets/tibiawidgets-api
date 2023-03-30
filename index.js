@@ -11,6 +11,7 @@ const passport = require("passport");
 const session = require("express-session");
 const morgan = require("morgan");
 const flash = require("connect-flash");
+const cookieParser = require("cookie-parser");
 require("./src/config/passport");
 require("dotenv").config();
 
@@ -26,6 +27,8 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+app.use(cookieParser(process.env.PASSPORT_SECRET));
 
 app.use(function (req, res, next) {
   const msgs = req.session.messages || [];

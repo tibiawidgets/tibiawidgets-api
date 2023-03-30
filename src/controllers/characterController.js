@@ -1,5 +1,6 @@
 const { connectToDatabase } = require("../database/mongo");
 const uuid = require("uuid");
+const User = require("../models/User");
 
 async function addUserCharacter(req, res) {
   const { email } = req.user;
@@ -29,9 +30,8 @@ async function addUserCharacter(req, res) {
 
 async function getUserCharacters(req, res) {
   const { email } = req.user;
-  const db = await connectToDatabase();
-  const userCollection = db.collection("users");
-  let user = await userCollection.findOne({ email });
+  await connectToDatabase();
+  let user = await User.findOne({ email });
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }

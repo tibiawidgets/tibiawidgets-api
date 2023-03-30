@@ -9,6 +9,7 @@ const passport = require("passport");
 function generateToken(user) {
   const payload = {
     id: user.id,
+    username: user.username,
     email: user.email,
   };
   const options = { expiresIn: "1h" };
@@ -21,7 +22,9 @@ async function login(req, res, next) {
       const { message, status } = err;
       return res.status(status).json({ message });
     }
-    return res.json({ user });
+    // authenticated, create token and send
+    const token = generateToken(user);
+    return res.json({ user, token });
   })(req, res, next);
 }
 
