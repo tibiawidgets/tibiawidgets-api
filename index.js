@@ -10,12 +10,14 @@ const cors = require("cors");
 const passport = require("passport");
 const session = require("express-session");
 const morgan = require("morgan");
+const flash = require("connect-flash");
 require("./src/config/passport");
 require("dotenv").config();
 
 const app = express();
 
 app.use(morgan("dev"));
+app.use(flash());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   session({

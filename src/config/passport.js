@@ -38,24 +38,35 @@ passport.use(
       passwordField: "password",
       passReqToCallback: true,
     },
-    async function (req, username, password, done) {
+    async function (req, email, password, done) {
+      debugger;
+      const { username } = req.body;
+      if (!username) {
+        return done(null, false, { message: "Missing username" });
+      }
+      if (!email) {
+        return done(null, false, { message: "Missing email" });
+      }
+      if (!password) {
+        return done(null, false, { message: "Missing password" });
+      }
       await connectToDatabase();
-      const existingUser = await User.findOne({ email: username });
+      const existingUser = await User.findOne({ email });
       if (existingUser) {
-        done(true, false, { message: "Email already exist" });
+        return done(true, false, { message: "Email already exist" });
       }
       const newUser = new User({
-        email: username,
-        name: username,
-        password: "",
+        email,
+        username,
+        password,
       });
       newUser.password = await newUser.encryptPassword(password);
-      debugger;
-      await newUser
-        .save()
-        .then(() => console.log("Usuario guardado"))
-        .catch(console.error);
-      done(null, newUser);
+      try {
+        await newUser.save().catch(console.error);
+      } catch (e) {
+        done(e);
+      }
+      return done(null, newUser);
     }
   )
 );

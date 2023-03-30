@@ -16,25 +16,20 @@ function generateToken(user) {
 }
 
 async function login(req, res, next) {
+  passport.authenticate("login", { passReqToCallback: true })(req, res, next);
+}
+
+async function signin(req, res, next) {
   passport.authenticate(
-    "login",
-    { passReqToCallback: true },
+    "signin",
+    { passReqToCallback: true, failureFlash },
     (err, user, response) => {
       if (err) {
-        return res.status(401).json({ message: "Invalid email or password" });
+        return res.status(401).json(response);
       }
       return res.json(user);
     }
   )(req, res, next);
-}
-
-async function signin(req, res, next) {
-  passport.authenticate("signin", {}, (err, user, response) => {
-    if (err) {
-      return res.status(500).json({ message: "Invalid email or password" });
-    }
-    return res.json(user);
-  })(req, res, next);
 }
 
 async function test(req, res) {
