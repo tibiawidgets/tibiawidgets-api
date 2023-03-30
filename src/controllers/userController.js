@@ -16,18 +16,26 @@ function generateToken(user) {
 }
 
 async function login(req, res, next) {
-  passport.authenticate("login", { passReqToCallback: true })(req, res, next);
+  passport.authenticate("login", function callback(err, user, info, status) {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      return res.redirect("/signin");
+    }
+    res.redirect("/account");
+  })(req, res, next);
 }
 
 async function signin(req, res, next) {
-  passport.authenticate(
+  return passport.authenticate(
     "signin",
-    { passReqToCallback: true, failureFlash },
-    (err, user, response) => {
+    function callback(err, user, info, status) {
       if (err) {
-        return res.status(401).json(response);
+        const { message } = err;
+        return res.status(401).json({ message });
       }
-      return res.json(user);
+      return res.json({ user });
     }
   )(req, res, next);
 }

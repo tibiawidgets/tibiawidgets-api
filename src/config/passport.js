@@ -38,22 +38,29 @@ passport.use(
       passwordField: "password",
       passReqToCallback: true,
     },
-    async function (req, email, password, done) {
-      debugger;
+    async (req, email, password, done) => {
       const { username } = req.body;
       if (!username) {
-        return done(null, false, { message: "Missing username" });
+        const error = new Error("Missing username");
+        error.status = 401;
+        return done(error, null, null, error.status);
       }
       if (!email) {
-        return done(null, false, { message: "Missing email" });
+        const error = new Error("Missing email");
+        error.status = 401;
+        return done(error, null, null, error.status);
       }
       if (!password) {
-        return done(null, false, { message: "Missing password" });
+        const error = new Error("Missing password");
+        error.status = 401;
+        return done(error, null, null, error.status);
       }
       await connectToDatabase();
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return done(true, false, { message: "Email already exist" });
+        const error = new Error("Email already exist");
+        error.status = 401;
+        return done(error, null, null, error.status);
       }
       const newUser = new User({
         email,
@@ -63,10 +70,12 @@ passport.use(
       newUser.password = await newUser.encryptPassword(password);
       try {
         await newUser.save().catch(console.error);
+        return done(null, newUser);
       } catch (e) {
-        done(e);
+        const error = new Error(e);
+        error.status = 500;
+        return done(error, null, null, error.status);
       }
-      return done(null, newUser);
     }
   )
 );
@@ -78,8 +87,8 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
-    return done(null, user);
+    done(null, user);
   } catch (err) {
-    return done(err);
+    done(err);
   }
 });
