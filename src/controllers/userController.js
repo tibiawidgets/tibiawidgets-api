@@ -3,6 +3,8 @@ const sendEmail = require("../utils/mailSender");
 const { connectToDatabase } = require("../database/mongo");
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../config/appConfig");
+const User = require("../models/User");
+const passport = require("passport");
 
 function generateToken(user) {
   const payload = {
@@ -13,50 +15,48 @@ function generateToken(user) {
   return jwt.sign(payload, jwtSecret, options);
 }
 
-async function login(req, res) {
-  const { email } = req.body;
-  debugger;
+async function login(req, res, next) {
+  passport.authenticate(
+    "login",
+    { passReqToCallback: true },
+    (err, user, response) => {
+      if (err) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+      return res.json(user);
+    }
+  )(req, res, next);
+}
 
-  // Find the user in the database by email
+async function signin(req, res, next) {
+  passport.authenticate("signin", {}, (err, user, response) => {
+    if (err) {
+      return res.status(500).json({ message: "Invalid email or password" });
+    }
+    return res.json(user);
+  })(req, res, next);
+}
+
+async function test(req, res) {
   const db = await connectToDatabase();
-  const userCollection = db.collection("users");
-  let user = await userCollection.findOne({ email });
-  if (!user) {
-    const newUser = { email, characters: [] };
-    user = await userCollection.insertOne(newUser);
-  }
-  const findCodeCriteria = {
-    email,
-    isValid: true,
-  };
-  const codesCollection = db.collection("codes");
-  const existing = await codesCollection.find(findCodeCriteria);
-  if (existing) {
-    await codesCollection.updateOne(findCodeCriteria, {
-      $set: { isValid: false },
-    });
-  }
-
-  const expiricy = 30 * 60 * 1000;
-  const createdAt = new Date();
-  const expiresAt = new Date(createdAt.getTime() + expiricy);
-  const code = generateCode();
-  const codeData = {
-    email,
-    code,
-    created_at: createdAt.toUTCString(),
-    expires_at: expiresAt.toUTCString(),
-    isValid: true,
-  };
-
-  await codesCollection.insertOne(codeData);
-
-  sendEmail(email, "Your TibiaWidgets Login Code", code);
-  console.log(code);
-  res.json({
-    message:
-      "An email with a code has been sent to you. Use this code to validate your identity. It will expire in 30 minutes.",
+  const newUser = new User({
+    name: "John Doe",
+    email: "johndoe@example.com",
+    password: "123456",
   });
+
+  try {
+    await newUser.save();
+  } catch (e) {
+    return res.status(404).json({ message: "Error on creating admin: ", e });
+  }
+
+  res.json({ message: "Admin created successfully" });
+}
+
+async function logout(req, res) {
+  req.logout();
+  res.json({ message: "logged out successfully" });
 }
 
 async function verifyCode(req, res) {
@@ -114,8 +114,11 @@ async function deleteUserById(req, res) {}
 
 module.exports = {
   login,
+  signin,
+  logout,
   verifyCode,
   updateUserById,
   deleteUserById,
   getUserByEmail,
+  test,
 };

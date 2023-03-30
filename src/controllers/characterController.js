@@ -3,19 +3,22 @@ const uuid = require("uuid");
 
 async function addUserCharacter(req, res) {
   const { email } = req.user;
-  const { name, world, sex, vocation } = req.body;
+  const { name, world, gender, vocation } = req.body;
   const db = await connectToDatabase();
   const userCollection = db.collection("users");
   let user = await userCollection.findOne({ email });
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
+  if (user.characters.find((char) => char.name === name)) {
+    return res.status(401).json({ message: "User already exists" });
+  }
   const userFilter = { email };
   const newCharacter = {
     id: uuid.v4(),
     name,
     world,
-    sex,
+    gender,
     vocation,
     huntSessions: [],
   };
