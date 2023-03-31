@@ -24,7 +24,8 @@ async function login(req, res, next) {
     }
     // authenticated, create token and send
     const token = generateToken(user);
-    return res.json({ user, token });
+    const bData = { username: user.username, email: user.email, id: user._id };
+    return res.json({ user: bData, token });
   })(req, res, next);
 }
 
@@ -101,16 +102,17 @@ async function verifyCode(req, res) {
 }
 
 async function getUserByEmail(req, res) {
-  const { email } = req.user;
-  const db = await connectToDatabase();
-  const userCollection = db.collection("users");
-  const filterByEmail = { email };
-  let user = await userCollection.findOne(filterByEmail);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+  try {
+    const { email } = req.user;
+    await connectToDatabase();
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ user });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  return res.status(200).json({ user });
 }
 
 async function updateUserById(req, res) {}
