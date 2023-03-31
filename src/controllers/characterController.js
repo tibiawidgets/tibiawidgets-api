@@ -5,9 +5,8 @@ const User = require("../models/User");
 async function addUserCharacter(req, res) {
   const { email } = req.user;
   const { name, world, gender, vocation } = req.body;
-  const db = await connectToDatabase();
-  const userCollection = db.collection("users");
-  let user = await userCollection.findOne({ email });
+  await connectToDatabase();
+  let user = await User.findOne({ email });
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -24,7 +23,7 @@ async function addUserCharacter(req, res) {
     huntSessions: [],
   };
   const insertChar = { $push: { characters: newCharacter } };
-  await userCollection.updateOne(userFilter, insertChar);
+  await user.updateOne(userFilter, insertChar);
   res.status(200).json(newCharacter);
 }
 
@@ -41,10 +40,9 @@ async function getUserCharacters(req, res) {
 async function getUserCharacterById(req, res) {
   const { email } = req.user;
   const { characterId } = req.params;
-  const db = await connectToDatabase();
-  const userCollection = db.collection("users");
+  await connectToDatabase();
   const filterByEmail = { email };
-  let user = await userCollection.findOne(filterByEmail);
+  let user = await User.findOne(filterByEmail);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -62,10 +60,9 @@ async function getUserCharacterById(req, res) {
 async function updateUserCharacter(req, res) {
   const { email } = req.user;
   const { characterId } = req.params;
-  const db = await connectToDatabase();
-  const userCollection = db.collection("users");
+  await connectToDatabase();
   const filterByEmail = { email };
-  let user = await userCollection.findOne(filterByEmail);
+  let user = await User.findOne(filterByEmail);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -81,17 +78,21 @@ async function updateUserCharacter(req, res) {
   const patchCharFilter = { ...filterByEmail, "characters.id": characterId };
   const patchedChar = { ...character, ...req.body };
   const patchedCharQuery = { $set: { "characters.$": patchedChar } };
-  const result = userCollection.updateOne(patchCharFilter, patchedCharQuery);
+  const result = user.updateOne(patchCharFilter, patchedCharQuery);
 
+  if (result.modifiedCount === 0) {
+    return res.status(404).json({
+      message: `An error ocurred while updating the character. Verify the ID and try again.`,
+    });
+  }
   res.status(200).json(patchedChar);
 }
 async function deleteUserCharacter(req, res) {
   const { email } = req.user;
   const { characterId } = req.params;
   const db = await connectToDatabase();
-  const userCollection = db.collection("users");
   const filterByEmail = { email };
-  let user = await userCollection.findOne(filterByEmail);
+  let user = await User.findOne(filterByEmail);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -108,7 +109,7 @@ async function deleteUserCharacter(req, res) {
     $pull: { characters: { id: characterId } },
   };
 
-  const result = await userCollection.updateOne(filterByEmail, update);
+  const result = await user.updateOne(filterByEmail, update);
 
   if (result.modifiedCount === 0) {
     return res.status(404).json({
@@ -125,9 +126,8 @@ async function deleteAllUserCharacters(req, res) {
   const { email } = req.user;
 
   const db = await connectToDatabase();
-  const userCollection = db.collection("users");
   const filterByEmail = { email };
-  let user = await userCollection.findOne(filterByEmail);
+  let user = await User.findOne(filterByEmail);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -136,7 +136,7 @@ async function deleteAllUserCharacters(req, res) {
     $set: { characters: [] },
   };
 
-  const result = await userCollection.updateOne(filterByEmail, update);
+  const result = await user.updateOne(filterByEmail, update);
 
   if (result.modifiedCount === 0) {
     return res.status(404).json({
