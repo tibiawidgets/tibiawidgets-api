@@ -34,10 +34,10 @@ async function getBoostedMonster() {
 async function getWorlds(req, res) {
   const response = await axios.get(`${tibiaDataAPI}/worlds`).catch(() => {
     return res.status(500).json({
-      message: `Error whilw fetching worlds`,
+      message: `Error while fetching worlds`,
     });
   });
-  const { worlds } = response.data;
+  const { worlds = [] } = response.data;
   return res.status(200).json({
     worlds,
   });
